@@ -1,0 +1,66 @@
+@page "{provisionId:guid}"
+@model GiftCardPos.Web.Pages.PaymentModel
+@{
+    ViewData["Title"] = "Held";
+}
+
+<section class="panel">
+    <h1>Value held</h1>
+
+    @if (Model.Error is not null)
+    {
+        <p class="error" role="alert">@Model.Error</p>
+    }
+
+    @if (Model.Provision is not null)
+    {
+        <dl class="facts">
+            <dt>Card</dt>
+            <dd>@Model.Provision.GiftCardPublicReference</dd>
+
+            <dt>Held</dt>
+            <dd class="total">@Model.FormattedHold</dd>
+
+            <dt>Store</dt>
+            <dd>@Model.Provision.StoreReference</dd>
+
+            <dt>Reference</dt>
+            <dd>@Model.Provision.PosTransactionReference</dd>
+
+            <dt>State</dt>
+            <dd>@Model.Provision.State</dd>
+        </dl>
+
+        <p class="help" role="status">
+            The customer cannot spend this amount elsewhere, and nothing has been
+            charged yet. The hold releases itself in
+            <strong>@Model.SecondsRemaining seconds</strong> if nobody finishes
+            the sale.
+        </p>
+
+        <form method="post" asp-page-handler="Confirm" class="inline">
+            <label for="amount">Charge</label>
+            <input id="amount"
+                   name="Amount"
+                   type="text"
+                   inputmode="decimal"
+                   value="@Model.Amount"
+                   aria-describedby="amount-help" />
+            <span class="currency">@Model.Currency</span>
+            <button type="submit">Confirm sale</button>
+        </form>
+        <p id="amount-help" class="help">
+            Charge less than the hold if a line was voided; the difference is
+            released back to the card in the same operation. More than the hold is
+            refused, and needs a fresh code.
+        </p>
+
+        <form method="post" asp-page-handler="Cancel">
+            <button type="submit" class="secondary">Release without charging</button>
+        </form>
+    }
+    else
+    {
+        <p><a href="/">Back to the till</a></p>
+    }
+</section>

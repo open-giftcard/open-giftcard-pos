@@ -1,0 +1,45 @@
+@page "{provisionId:guid}"
+@model GiftCardPos.Web.Pages.ReceiptModel
+@{
+    ViewData["Title"] = "Receipt";
+}
+
+<section class="panel receipt">
+    <h1>Paid</h1>
+
+    @if (Model.Error is not null)
+    {
+        <p class="error" role="alert">@Model.Error</p>
+    }
+    else if (Model.Provision is not null)
+    {
+        <p class="total charged">@Model.FormattedCharged</p>
+
+        <dl class="facts">
+            <dt>Card</dt>
+            <dd>@Model.Provision.GiftCardPublicReference</dd>
+
+            <dt>Store</dt>
+            <dd>@Model.Provision.StoreReference</dd>
+
+            <dt>Reference</dt>
+            <dd>@Model.Provision.PosTransactionReference</dd>
+
+            <dt>Settled</dt>
+            <dd>@(Model.Provision.SettledAtUtc?.ToString("u") ?? "-")</dd>
+
+            @if (Model.HasRelease)
+            {
+                <dt>Released back</dt>
+                <dd>@Model.FormattedReleased</dd>
+            }
+        </dl>
+
+        <p class="help">
+            The platform has posted this to its ledger. It is the authority for the
+            transaction; this screen only reports what it recorded.
+        </p>
+    }
+
+    <p><a href="/">Next customer</a></p>
+</section>

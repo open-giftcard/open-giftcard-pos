@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>GiftCardPos.Web</RootNamespace>
+    <UserSecretsId>giftcard-platform-pos-3921908d-0ef5-5e5c-964d-0798a91612e9</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="GiftCardPos.Tests" />
+  </ItemGroup>
+
+</Project>

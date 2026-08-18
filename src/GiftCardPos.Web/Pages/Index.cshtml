@@ -1,0 +1,63 @@
+@page
+@model GiftCardPos.Web.Pages.IndexModel
+@{
+    ViewData["Title"] = "Till";
+}
+
+<section class="panel">
+    <h1>Basket</h1>
+
+    <table class="lines">
+        <thead>
+            <tr>
+                <th scope="col">Item</th>
+                <th scope="col" class="numeric">Qty</th>
+                <th scope="col" class="numeric">Unit</th>
+                <th scope="col" class="numeric">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var line in Model.Lines)
+            {
+                <tr>
+                    <td>@line.Name</td>
+                    <td class="numeric">@line.Quantity</td>
+                    <td class="numeric">@line.FormatUnitPrice(Model.Currency)</td>
+                    <td class="numeric">@line.FormatTotal(Model.Currency)</td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <th scope="row" colspan="3">Total due</th>
+                <td class="numeric total">@Model.FormattedTotal</td>
+            </tr>
+        </tfoot>
+    </table>
+</section>
+
+<section class="panel">
+    <h2>Take payment</h2>
+
+    @if (Model.Error is not null)
+    {
+        <p class="error" role="alert">@Model.Error</p>
+    }
+
+    <form method="post" autocomplete="off">
+        <label for="credential">Scan the QR code, or type the 12-digit code</label>
+        <input id="credential"
+               name="Credential"
+               type="text"
+               inputmode="numeric"
+               autocomplete="off"
+               autofocus
+               placeholder="1234 5678 9012"
+               aria-describedby="credential-help" />
+        <p id="credential-help" class="help">
+            A barcode scanner types the QR value straight into this field. The code
+            is valid for 60 seconds and works once.
+        </p>
+        <button type="submit">Charge @Model.FormattedTotal</button>
+    </form>
+</section>
