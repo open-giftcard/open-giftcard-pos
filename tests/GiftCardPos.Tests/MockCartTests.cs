@@ -21,8 +21,20 @@ public sealed class MockCartTests
         var previous = CultureInfo.CurrentCulture;
         try
         {
+            // A culture whose decimal separator is a comma, so a culture-sensitive
+            // format would be visibly wrong. Derived from the line rather than
+            // hardcoded, because the assertion is about the formatting rule and
+            // not about what happens to be in the demonstration basket.
             CultureInfo.CurrentCulture = new CultureInfo("tr-TR");
-            Assert.Equal("34.50 TRY", MockCart.Lines[0].FormatUnitPrice("TRY"));
+
+            var line = MockCart.Lines[0];
+            var expected =
+                line.UnitPrice.ToString("0.00", CultureInfo.InvariantCulture) + " TRY";
+
+            var formatted = line.FormatUnitPrice("TRY");
+
+            Assert.Equal(expected, formatted);
+            Assert.DoesNotContain(",", formatted, StringComparison.Ordinal);
         }
         finally
         {

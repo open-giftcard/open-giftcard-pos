@@ -63,5 +63,5 @@ public sealed class PosOptions
 
     public string TerminalCode { get; set; } = string.Empty;
 
-    public string Currency { get; set; } = "TRY";
+    public string Currency { get; set; } = "USD";
 }

@@ -26,11 +26,11 @@ public static class MockCart
 {
     public static IReadOnlyList<CartLine> Lines { get; } =
     [
-        new CartLine("Süt 1 L", 2, 34.50m),
-        new CartLine("Tam buğday ekmek", 1, 22.00m),
-        new CartLine("Yumurta 10'lu", 1, 89.90m),
-        new CartLine("Zeytinyağı 750 ml", 1, 249.00m),
-        new CartLine("Filtre kahve 250 g", 2, 154.75m),
+        new CartLine("Milk, 1 L", 2, 3.45m),
+        new CartLine("Wholemeal bread", 1, 2.20m),
+        new CartLine("Eggs, box of 10", 1, 8.99m),
+        new CartLine("Olive oil, 750 ml", 1, 24.90m),
+        new CartLine("Filter coffee, 250 g", 2, 15.475m),
     ];
 
     public static decimal Total => Lines.Sum(line => line.Total);
