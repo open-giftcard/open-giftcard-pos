@@ -199,6 +199,34 @@ The key is required. An unset `Pos:LocalApiKey` disables this surface rather tha
 opening it: loopback is not authentication, because every process on the machine
 can reach it. The API also refuses any request that did not arrive over loopback.
 
-This variant expects the till to supply the credential, which suits a till with
-its own scanner. The variant where the cashier scans on this application's screen
-while the till waits is not built yet.
+### When the cashier holds the scanner
+
+If the scanner is attached to this machine rather than to the till, the till
+hands the sale over and asks about it instead of sending a credential.
+
+```
+POST /local/v1/sale/start   { "amount": 12.50, "saleReference": "SALE-1234" }
+   -> 201 { "saleId": "...", "outcome": "awaiting-card" }
+
+GET  /local/v1/sale/{saleId}
+   -> 200 { "outcome": "approved", "approvedAmount": 8.00, "outstandingAmount": 4.50 }
+
+POST /local/v1/sale/{saleId}/cancel      take the sale back
+```
+
+The sale appears on this screen, the cashier presents the card, and the till sees
+the outcome the next time it asks.
+
+**Ask rather than hold the line open.** A cashier takes as long as a person
+takes, so the till polls instead of waiting on one long request. Nothing couples
+the till's timeout to how fast someone finds their phone.
+
+**One sale at a time.** A lane has one reader and one person standing at it, so
+starting a second sale while one waits is refused with `lane_busy`. Starting the
+same `saleReference` twice returns the sale already waiting rather than putting a
+second one in front of the cashier.
+
+**A sale nobody scans lapses** after five minutes and reads back as `expired`,
+so a till learns why rather than being told the sale never existed. A `cancel`
+that arrives after the cashier has already taken payment is refused with 409
+rather than reporting success.

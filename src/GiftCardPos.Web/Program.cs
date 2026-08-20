@@ -7,6 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorPages();
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<GiftCardPos.Web.LocalApi.PendingSaleStore>();
+builder.Services.AddSingleton<GiftCardPos.Web.LocalApi.SalePayments>();
 
 if (builder.Environment.IsDevelopment())
 {

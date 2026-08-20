@@ -37,13 +37,27 @@ internal static class LocalSaleApi
             .WithName("LocalTakePayment")
             .ExcludeFromDescription();
 
+        // The cashier-in-the-loop shape: the till hands the sale over and asks
+        // about it, rather than holding a connection open while a person acts.
+        app.MapPost($"{RouteBase}/sale/start", StartSaleAsync)
+            .WithName("LocalStartSale")
+            .ExcludeFromDescription();
+
+        app.MapGet($"{RouteBase}/sale/{{saleId:guid}}", GetSaleAsync)
+            .WithName("LocalGetSale")
+            .ExcludeFromDescription();
+
+        app.MapPost($"{RouteBase}/sale/{{saleId:guid}}/cancel", CancelSaleAsync)
+            .WithName("LocalCancelSale")
+            .ExcludeFromDescription();
+
         return app;
     }
 
     private static async Task<IResult> TakePaymentAsync(
         [FromBody] LocalPaymentRequest request,
         HttpContext context,
-        PosApiClient api,
+        SalePayments payments,
         IOptions<PosOptions> options,
         CancellationToken cancellationToken)
     {
@@ -80,52 +94,167 @@ internal static class LocalSaleApi
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
-        var held = await api.CreateProvisionAsync(
+        var outcome = await payments.TakeAsync(
             request.Credential,
             request.Amount,
             request.SaleReference.Trim(),
             cancellationToken).ConfigureAwait(false);
 
-        if (!held.Ok)
-        {
-            return Results.Json(
-                new LocalPaymentResult("declined", held.Error, null, null, null, null));
-        }
+        var result = new LocalPaymentResult(
+            outcome.Outcome switch
+            {
+                PendingSaleState.Approved => "approved",
+                PendingSaleState.Indeterminate => "indeterminate",
+                _ => "declined",
+            },
+            outcome.Reason,
+            outcome.ApprovedAmount,
+            outcome.OutstandingAmount,
+            outcome.Currency,
+            outcome.PaymentReference);
 
-        var provision = held.Value!;
-
-        // Confirm exactly what was approved. The held amount is the ceiling, so
-        // this can never charge more than the card agreed to.
-        var confirmed = await api
-            .ConfirmAsync(provision.Id, provision.Amount, cancellationToken)
-            .ConfigureAwait(false);
-
-        if (!confirmed.Ok)
-        {
-            // The hold exists and the charge did not complete. Indeterminate is
-            // not declined: a till told "declined" here would take the whole
-            // amount by another tender while the customer's value is still held.
-            return Results.Json(
-                new LocalPaymentResult(
-                    "indeterminate",
-                    confirmed.Error,
-                    0m,
-                    request.Amount,
-                    provision.Currency,
-                    provision.Id));
-        }
-
-        var settled = confirmed.Value!;
-        var approved = settled.ConfirmedAmount ?? settled.Amount;
-        return Results.Ok(
-            new LocalPaymentResult(
-                "approved",
-                null,
-                approved,
-                request.Amount - approved,
-                settled.Currency,
-                settled.Id));
+        return Results.Json(result);
     }
+
+    private static async Task<IResult> StartSaleAsync(
+        [FromBody] LocalStartSaleRequest request,
+        HttpContext context,
+        PendingSaleStore sales,
+        IOptions<PosOptions> options,
+        CancellationToken cancellationToken)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        context.Response.Headers.CacheControl = "no-store";
+        var settings = options.Value;
+
+        if (Refuse(context, settings) is { } refusal)
+        {
+            return refusal;
+        }
+
+        if (request is null ||
+            string.IsNullOrWhiteSpace(request.SaleReference) ||
+            request.Amount is not > 0m ||
+            decimal.Round(request.Amount, 4) != request.Amount)
+        {
+            return Results.Json(
+                new { outcome = "declined", reason = "invalid_request" },
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        var started = sales.Start(
+            request.SaleReference.Trim(),
+            request.Amount,
+            settings.Currency);
+
+        if (started.Sale is null)
+        {
+            // One reader, one person standing at it. A second concurrent sale
+            // would only make it ambiguous which one a scan belongs to.
+            return Results.Json(
+                new { outcome = "declined", reason = "lane_busy" },
+                statusCode: StatusCodes.Status409Conflict);
+        }
+
+        return Results.Json(
+            ToStatus(started.Sale),
+            statusCode: started.IsRepeat
+                ? StatusCodes.Status200OK
+                : StatusCodes.Status201Created);
+    }
+
+    private static async Task<IResult> GetSaleAsync(
+        Guid saleId,
+        HttpContext context,
+        PendingSaleStore sales,
+        IOptions<PosOptions> options,
+        CancellationToken cancellationToken)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        context.Response.Headers.CacheControl = "no-store";
+
+        if (Refuse(context, options.Value) is { } refusal)
+        {
+            return refusal;
+        }
+
+        var sale = sales.Find(saleId);
+        return sale is null ? Results.NotFound() : Results.Ok(ToStatus(sale));
+    }
+
+    private static async Task<IResult> CancelSaleAsync(
+        Guid saleId,
+        HttpContext context,
+        PendingSaleStore sales,
+        IOptions<PosOptions> options,
+        CancellationToken cancellationToken)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        context.Response.Headers.CacheControl = "no-store";
+
+        if (Refuse(context, options.Value) is { } refusal)
+        {
+            return refusal;
+        }
+
+        var cancelled = sales.Settle(
+            saleId,
+            PendingSaleState.Cancelled,
+            "cancelled_by_till",
+            approvedAmount: null,
+            outstandingAmount: null,
+            paymentReference: null);
+
+        if (cancelled is not null)
+        {
+            return Results.Ok(ToStatus(cancelled));
+        }
+
+        // Either unknown, or already finished. A cancel that arrives after the
+        // cashier has taken the payment must not report success.
+        var existing = sales.Find(saleId);
+        return existing is null
+            ? Results.NotFound()
+            : Results.Json(ToStatus(existing), statusCode: StatusCodes.Status409Conflict);
+    }
+
+    /// <summary>The two guards every local endpoint shares.</summary>
+    private static IResult? Refuse(HttpContext context, PosOptions settings)
+    {
+        if (!IsLoopback(context))
+        {
+            return Results.Json(
+                new { outcome = "declined", reason = "not_local" },
+                statusCode: StatusCodes.Status403Forbidden);
+        }
+
+        return IsAuthorised(context, settings)
+            ? null
+            : Results.Json(
+                new { outcome = "declined", reason = "unauthorised" },
+                statusCode: StatusCodes.Status401Unauthorized);
+    }
+
+    internal static LocalSaleStatus ToStatus(PendingSale sale) =>
+        new(
+            sale.Id,
+            sale.State switch
+            {
+                PendingSaleState.AwaitingCard => "awaiting-card",
+                PendingSaleState.Approved => "approved",
+                PendingSaleState.Declined => "declined",
+                PendingSaleState.Indeterminate => "indeterminate",
+                PendingSaleState.Cancelled => "cancelled",
+                PendingSaleState.Expired => "expired",
+                _ => "declined",
+            },
+            sale.Reason,
+            sale.Amount,
+            sale.ApprovedAmount,
+            sale.OutstandingAmount,
+            sale.Currency,
+            sale.PaymentReference,
+            sale.ExpiresAtUtc);
 
     private static bool IsLoopback(HttpContext context)
     {
@@ -183,3 +312,26 @@ public sealed record LocalPaymentResult(
     decimal? OutstandingAmount,
     string? Currency,
     Guid? PaymentReference);
+
+/// <param name="SaleReference">
+/// The sale's identity in the till, and the idempotency key. Starting twice with
+/// the same reference returns the sale already waiting rather than putting a
+/// second one in front of the cashier.
+/// </param>
+public sealed record LocalStartSaleRequest(decimal Amount, string? SaleReference);
+
+/// <param name="Outcome">
+/// <c>awaiting-card</c> while the cashier has not presented one yet, then
+/// <c>approved</c>, <c>declined</c>, <c>indeterminate</c>, <c>cancelled</c> or
+/// <c>expired</c>. Only <c>awaiting-card</c> is worth asking about again.
+/// </param>
+public sealed record LocalSaleStatus(
+    Guid SaleId,
+    string Outcome,
+    string? Reason,
+    decimal Amount,
+    decimal? ApprovedAmount,
+    decimal? OutstandingAmount,
+    string Currency,
+    Guid? PaymentReference,
+    DateTimeOffset ExpiresAtUtc);

@@ -7,45 +7,70 @@
 <section class="panel">
     <h1>Take gift card payment</h1>
 
-    <p class="help">
-        Enter the amount still owed on the sale, then present the customer's card.
-        Products, tax and the rest of the sale stay in your own till: this screen
-        only moves value off a gift card.
-    </p>
+    @if (Model.Result is not null)
+    {
+        <p class="result" role="status">@Model.Result</p>
+    }
 
     @if (Model.Error is not null)
     {
         <p class="error" role="alert">@Model.Error</p>
     }
 
-    <form method="post" autocomplete="off">
-        <label for="amount">Amount to take (@Model.Currency)</label>
-        <input id="amount"
-               name="Amount"
-               type="text"
-               inputmode="decimal"
-               autocomplete="off"
-               autofocus
-               placeholder="12.50"
-               value="@Model.Amount"
-               aria-describedby="amount-help" />
-        <p id="amount-help" class="help">
-            Copy the outstanding total from your till. Use a full stop for the
-            decimal separator.
+    @if (Model.HandedOver is not null)
+    {
+        <p class="help">
+            Your till sent this sale. Present the customer's card to pay it.
         </p>
 
-        <label for="sale-reference">Your sale reference (optional)</label>
-        <input id="sale-reference"
-               name="SaleReference"
-               type="text"
-               autocomplete="off"
-               placeholder="SALE-1234"
-               value="@Model.SaleReference"
-               aria-describedby="sale-reference-help" />
-        <p id="sale-reference-help" class="help">
-            Printed on the receipt and used for refunds. Repeating the same
-            reference retries the same sale rather than taking a second payment.
+        <dl class="handover">
+            <dt>Amount</dt>
+            <dd class="numeric total">@Model.HandedOverAmount</dd>
+            <dt>Sale</dt>
+            <dd>@Model.HandedOver.SaleReference</dd>
+        </dl>
+    }
+    else
+    {
+        <p class="help">
+            Enter the amount still owed on the sale, then present the customer's
+            card. Products, tax and the rest of the sale stay in your own till:
+            this screen only moves value off a gift card.
         </p>
+    }
+
+    <form method="post" autocomplete="off">
+        @if (Model.HandedOver is null)
+        {
+            <label for="amount">Amount to take (@Model.Currency)</label>
+            <input id="amount"
+                   name="Amount"
+                   type="text"
+                   inputmode="decimal"
+                   autocomplete="off"
+                   autofocus
+                   placeholder="12.50"
+                   value="@Model.Amount"
+                   aria-describedby="amount-help" />
+            <p id="amount-help" class="help">
+                Copy the outstanding total from your till. Use a full stop for the
+                decimal separator.
+            </p>
+
+            <label for="sale-reference">Your sale reference (optional)</label>
+            <input id="sale-reference"
+                   name="SaleReference"
+                   type="text"
+                   autocomplete="off"
+                   placeholder="SALE-1234"
+                   value="@Model.SaleReference"
+                   aria-describedby="sale-reference-help" />
+            <p id="sale-reference-help" class="help">
+                Printed on the receipt and used for refunds. Repeating the same
+                reference retries the same sale rather than taking a second
+                payment.
+            </p>
+        }
 
         <label for="credential">Scan the QR code, or type the 12-digit code</label>
         <input id="credential"
@@ -53,6 +78,7 @@
                type="text"
                inputmode="numeric"
                autocomplete="off"
+               autofocus="@(Model.HandedOver is not null)"
                placeholder="1234 5678 9012"
                aria-describedby="credential-help" />
         <p id="credential-help" class="help">

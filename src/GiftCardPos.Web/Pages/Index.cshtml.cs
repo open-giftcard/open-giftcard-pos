@@ -1,5 +1,7 @@
 using System.Globalization;
 using GiftCardPos.Web.Backend;
+using GiftCardPos.Web.Display;
+using GiftCardPos.Web.LocalApi;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Options;
@@ -7,25 +9,32 @@ using Microsoft.Extensions.Options;
 namespace GiftCardPos.Web.Pages;
 
 /// <summary>
-/// The cashier enters the amount still to pay, then presents the card.
+/// The cashier's screen, serving both tiers.
 ///
-/// This replaced a fixed demonstration basket. The basket made this look like a
-/// small supermarket, which is the one thing this component must not become:
-/// products, quantities, tax and totals belong to whatever till the shop already
-/// runs. This application accepts an amount and answers with a result.
+/// When the shop's till has handed a sale over the local API, the amount and the
+/// reference come from it and the cashier only presents the card. When it has
+/// not, the cashier types the amount themselves, which is what a shop does when
+/// its till cannot be integrated at all.
 ///
-/// Typing the amount is the lowest tier of the semi-integrated pattern, and it
-/// is deliberately the fallback rather than the destination: it is what a shop
-/// uses when its till cannot be integrated at all. The integration path is a
-/// local API the till calls directly, which is the next slice.
+/// The fixed demonstration basket this replaced made the application look like a
+/// small supermarket, which is the one thing it must not become: products,
+/// quantities and tax belong to whatever till the shop already runs.
 /// </summary>
 public sealed class IndexModel(
-    PosApiClient api,
+    SalePayments payments,
+    PendingSaleStore sales,
     IOptions<PosOptions> options) : PageModel
 {
     private readonly PosOptions settings = options.Value;
 
     public string Currency => settings.Currency;
+
+    /// <summary>Set when a till is waiting on this lane.</summary>
+    public PendingSale? HandedOver { get; private set; }
+
+    public string? HandedOverAmount => HandedOver is null
+        ? null
+        : Money.Format(HandedOver.Amount, HandedOver.Currency);
 
     /// <summary>The amount the shop's own till says is still owed.</summary>
     [BindProperty]
@@ -34,7 +43,7 @@ public sealed class IndexModel(
     /// <summary>
     /// The sale's identity in the shop's own till, so a receipt and a refund can
     /// be tied back to it. It is also the idempotency key, which is why a retry
-    /// of the same sale is answered with the hold it already has.
+    /// of the same sale is answered with the payment it already took.
     /// </summary>
     [BindProperty]
     public string? SaleReference { get; set; }
@@ -49,13 +58,33 @@ public sealed class IndexModel(
 
     public string? Error { get; private set; }
 
-    public void OnGet()
-    {
-    }
+    public string? Result { get; private set; }
+
+    public void OnGet() => HandedOver = sales.AwaitingCard();
 
     public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)
     {
-        if (!TryParseAmount(Amount, out var amount))
+        HandedOver = sales.AwaitingCard();
+
+        decimal amount;
+        string reference;
+        if (HandedOver is not null)
+        {
+            // The till owns these. A cashier must not be able to change the
+            // amount a sale was handed over for.
+            amount = HandedOver.Amount;
+            reference = HandedOver.SaleReference;
+        }
+        else if (TryParseAmount(Amount, out var typed))
+        {
+            amount = typed;
+            reference = string.IsNullOrWhiteSpace(SaleReference)
+                ? "SALE-" + DateTime.UtcNow.ToString(
+                    "yyyyMMddHHmmss",
+                    CultureInfo.InvariantCulture)
+                : SaleReference.Trim();
+        }
+        else
         {
             Error = "Enter the amount to take from the card, for example 12.50.";
             Credential = null;
@@ -68,27 +97,49 @@ public sealed class IndexModel(
             return Page();
         }
 
-        var reference = string.IsNullOrWhiteSpace(SaleReference)
-            ? "SALE-" + DateTime.UtcNow.ToString("yyyyMMddHHmmss", CultureInfo.InvariantCulture)
-            : SaleReference.Trim();
-
-        var result = await api.CreateProvisionAsync(
-            Credential,
-            amount,
-            reference,
-            cancellationToken).ConfigureAwait(false);
+        var outcome = await payments
+            .TakeAsync(Credential, amount, reference, cancellationToken)
+            .ConfigureAwait(false);
 
         // Drop the credential the moment the platform has resolved it, so a
         // re-rendered page cannot carry it.
         Credential = null;
 
-        if (!result.Ok)
+        if (HandedOver is not null)
         {
-            Error = result.Error;
-            return Page();
+            // Tell the till before telling the cashier. The till is the system of
+            // record for the sale, and it is the one that cannot ask again.
+            sales.Settle(
+                HandedOver.Id,
+                outcome.Outcome,
+                outcome.Reason,
+                outcome.ApprovedAmount,
+                outcome.OutstandingAmount,
+                outcome.PaymentReference);
+            HandedOver = null;
         }
 
-        return RedirectToPage("Payment", new { provisionId = result.Value!.Id });
+        switch (outcome.Outcome)
+        {
+            case PendingSaleState.Approved:
+                Result = outcome.OutstandingAmount > 0m
+                    ? $"Took {Money.Format(outcome.ApprovedAmount, outcome.Currency ?? Currency)}. " +
+                      $"{Money.Format(outcome.OutstandingAmount, outcome.Currency ?? Currency)} still to pay."
+                    : $"Took {Money.Format(outcome.ApprovedAmount, outcome.Currency ?? Currency)}. Paid in full.";
+                Amount = null;
+                SaleReference = null;
+                return Page();
+
+            case PendingSaleState.Indeterminate:
+                Error =
+                    "The platform did not confirm before the connection ended. " +
+                    "The card may have been charged. Check before taking payment again.";
+                return Page();
+
+            default:
+                Error = outcome.Reason;
+                return Page();
+        }
     }
 
     /// <summary>
