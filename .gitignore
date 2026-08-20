@@ -43,3 +43,7 @@ pgdata/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Python bytecode, from running the integration samples.
+__pycache__/
+*.pyc
