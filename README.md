@@ -226,6 +226,12 @@ starting a second sale while one waits is refused with `lane_busy`. Starting the
 same `saleReference` twice returns the sale already waiting rather than putting a
 second one in front of the cashier.
 
+Working samples for both shapes are in [`examples/`](examples/), in curl, Python
+and C#. They are examples to copy rather than a library, so there is no package
+and no compatibility promise, but a test asserts the routes they name still
+exist: the way samples actually fail is that the API moves and nobody updates
+them.
+
 **A sale nobody scans lapses** after five minutes and reads back as `expired`,
 so a till learns why rather than being told the sale never existed. A `cancel`
 that arrives after the cashier has already taken payment is refused with 409
