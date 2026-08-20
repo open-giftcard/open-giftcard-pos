@@ -1,5 +1,5 @@
 using GiftCardPos.Web.Backend;
-using GiftCardPos.Web.Cart;
+using GiftCardPos.Web.Display;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -17,7 +17,7 @@ public sealed class ReceiptModel(PosApiClient api) : PageModel
     public string FormattedCharged =>
         Provision?.ConfirmedAmount is null
             ? string.Empty
-            : CartLine.Money(Provision.ConfirmedAmount.Value, Provision.Currency);
+            : Money.Format(Provision.ConfirmedAmount.Value, Provision.Currency);
 
     /// <summary>
     /// What went back to the card because the sale confirmed for less than the
@@ -26,7 +26,7 @@ public sealed class ReceiptModel(PosApiClient api) : PageModel
     public string FormattedReleased =>
         Provision?.ConfirmedAmount is null
             ? string.Empty
-            : CartLine.Money(Provision.Amount - Provision.ConfirmedAmount.Value, Provision.Currency);
+            : Money.Format(Provision.Amount - Provision.ConfirmedAmount.Value, Provision.Currency);
 
     public bool HasRelease =>
         Provision?.ConfirmedAmount is not null && Provision.Amount > Provision.ConfirmedAmount.Value;

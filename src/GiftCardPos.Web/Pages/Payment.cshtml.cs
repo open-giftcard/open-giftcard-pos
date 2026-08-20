@@ -1,5 +1,5 @@
 using GiftCardPos.Web.Backend;
-using GiftCardPos.Web.Cart;
+using GiftCardPos.Web.Display;
 using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -38,7 +38,7 @@ public sealed class PaymentModel(
     public string Currency => settings.Currency;
 
     public string FormattedHold =>
-        Provision is null ? string.Empty : CartLine.Money(Provision.Amount, Provision.Currency);
+        Provision is null ? string.Empty : Money.Format(Provision.Amount, Provision.Currency);
 
     public int SecondsRemaining =>
         Provision is null

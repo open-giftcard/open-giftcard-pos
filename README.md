@@ -4,8 +4,10 @@ A counter-side till that takes gift card payment against the Gift Card
 platform. Fourth repository alongside the backend, the finance portal, and the
 cardholder application.
 
-**This is a demonstration till, not retail software.** The basket is five fixed
-lines of shopping. There is no catalogue, stock, pricing, tax, receipt printer,
+**This is a gift card payment component, not retail software.** The cashier
+enters the amount still owed and presents the customer's card; the shop's own
+till keeps the products, quantities and tax. There is no catalogue, stock,
+pricing, tax engine, receipt printer,
 cash drawer, or offline mode. It exists so the payment journey can be shown end
 to end, and so the backend's POS contract has a real client exercising it.
 
@@ -23,7 +25,8 @@ is published as a reference client rather than a released component:
 - Data Protection keys are persisted only in Development. Outside it, antiforgery
   tokens do not survive a restart or span replicas.
 - It exposes `/health` but no `/health/ready`.
-- Coverage is nine unit tests over credential formatting and basket arithmetic.
+- Coverage is 47 tests over credential formatting, amount entry, response
+  security headers, both health probes, and the pinned backend contract.
   There are no integration or browser tests.
 
 Treat these as the entry criteria for calling it released.
@@ -46,11 +49,11 @@ credential and stays server-side.
 
 ## The journey
 
-1. **Basket.** Fixed lines and a total.
+1. **Amount.** The cashier types what is still owed, copied from their till.
 2. **Present.** The cashier scans the customer's QR code or types their 12-digit
    code. A barcode scanner types the QR value straight into the field, so one
    input handles both; the till decides which form it received.
-3. **Hold.** The platform reserves the basket total for two minutes and posts
+3. **Hold.** The platform reserves the entered amount for two minutes and posts
    nothing. The screen shows what is held and the time left. The customer cannot
    spend that value elsewhere meanwhile, and no money has moved.
 4. **Confirm.** Charge the held amount, or less if a line was voided — the
@@ -125,7 +128,7 @@ the posted balance has not changed and the Ledger has no entry. That gap is the
 difference between authorising a payment and taking one, and it is the clearest
 way to show why the platform models them separately.
 
-Then confirm for *less* than the basket total. The receipt shows the released
+Then confirm for *less* than the amount held. The receipt shows the released
 difference, and the cardholder's available balance reflects it immediately.
 
 ## Tests
@@ -134,7 +137,7 @@ difference, and the cardholder's available balance reflects it immediately.
 dotnet test
 ```
 
-The suite covers the credential-form decision and basket arithmetic. There is no
+The suite covers the credential-form decision and amount entry. There is no
 integration suite here: the behaviour worth testing against a real database
 belongs to the platform and is tested there, and duplicating it would assert the
 same invariants twice while proving nothing extra about this client.
@@ -153,7 +156,8 @@ same invariants twice while proving nothing extra about this client.
 ```text
 src/GiftCardPos.Web/
   Backend/     platform client, device-token handling, contract subset
-  Cart/        the fixed demonstration basket
-  Pages/       basket, held sale, receipt
+  Display/     how money is written on screen and on a receipt
+  Security/    response security headers
+  Pages/       amount entry, held sale, receipt
 tests/GiftCardPos.Tests/
 ```

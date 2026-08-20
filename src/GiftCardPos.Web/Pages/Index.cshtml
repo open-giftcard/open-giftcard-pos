@@ -1,43 +1,17 @@
 @page
 @model GiftCardPos.Web.Pages.IndexModel
 @{
-    ViewData["Title"] = "Till";
+    ViewData["Title"] = "Take gift card payment";
 }
 
 <section class="panel">
-    <h1>Basket</h1>
+    <h1>Take gift card payment</h1>
 
-    <table class="lines">
-        <thead>
-            <tr>
-                <th scope="col">Item</th>
-                <th scope="col" class="numeric">Qty</th>
-                <th scope="col" class="numeric">Unit</th>
-                <th scope="col" class="numeric">Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var line in Model.Lines)
-            {
-                <tr>
-                    <td>@line.Name</td>
-                    <td class="numeric">@line.Quantity</td>
-                    <td class="numeric">@line.FormatUnitPrice(Model.Currency)</td>
-                    <td class="numeric">@line.FormatTotal(Model.Currency)</td>
-                </tr>
-            }
-        </tbody>
-        <tfoot>
-            <tr>
-                <th scope="row" colspan="3">Total due</th>
-                <td class="numeric total">@Model.FormattedTotal</td>
-            </tr>
-        </tfoot>
-    </table>
-</section>
-
-<section class="panel">
-    <h2>Take payment</h2>
+    <p class="help">
+        Enter the amount still owed on the sale, then present the customer's card.
+        Products, tax and the rest of the sale stay in your own till: this screen
+        only moves value off a gift card.
+    </p>
 
     @if (Model.Error is not null)
     {
@@ -45,19 +19,47 @@
     }
 
     <form method="post" autocomplete="off">
+        <label for="amount">Amount to take (@Model.Currency)</label>
+        <input id="amount"
+               name="Amount"
+               type="text"
+               inputmode="decimal"
+               autocomplete="off"
+               autofocus
+               placeholder="12.50"
+               value="@Model.Amount"
+               aria-describedby="amount-help" />
+        <p id="amount-help" class="help">
+            Copy the outstanding total from your till. Use a full stop for the
+            decimal separator.
+        </p>
+
+        <label for="sale-reference">Your sale reference (optional)</label>
+        <input id="sale-reference"
+               name="SaleReference"
+               type="text"
+               autocomplete="off"
+               placeholder="SALE-1234"
+               value="@Model.SaleReference"
+               aria-describedby="sale-reference-help" />
+        <p id="sale-reference-help" class="help">
+            Printed on the receipt and used for refunds. Repeating the same
+            reference retries the same sale rather than taking a second payment.
+        </p>
+
         <label for="credential">Scan the QR code, or type the 12-digit code</label>
         <input id="credential"
                name="Credential"
                type="text"
                inputmode="numeric"
                autocomplete="off"
-               autofocus
                placeholder="1234 5678 9012"
                aria-describedby="credential-help" />
         <p id="credential-help" class="help">
             A barcode scanner types the QR value straight into this field. The code
             is valid for 60 seconds and works once.
         </p>
-        <button type="submit">Charge @Model.FormattedTotal</button>
+
+        <button type="submit">Take payment</button>
     </form>
 </section>
