@@ -63,6 +63,12 @@ public sealed class PosApiClient(
             paymentCode = numeric ? (string?)Normalize(credential) : null,
             amount,
             posTransactionReference,
+
+            // The sale reference is the key. One sale takes one hold, so
+            // retrying the same sale after a lost response must be answered with
+            // the hold it already has rather than refused as a replay of a spent
+            // credential. A value generated per call would defeat that.
+            idempotencyKey = posTransactionReference,
         };
 
         return await SendAsync<PaymentProvision>(
