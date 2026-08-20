@@ -1,4 +1,4 @@
-﻿namespace GiftCardPos.Web.Backend;
+namespace GiftCardPos.Web.Backend;
 
 /// <summary>
 /// The subset of the platform contract this till binds to. Deliberately narrow:
@@ -64,4 +64,15 @@ public sealed class PosOptions
     public string TerminalCode { get; set; } = string.Empty;
 
     public string Currency { get; set; } = "USD";
+
+    /// <summary>
+    /// Shared secret an existing till presents to the local integration API, in
+    /// <c>X-Pos-Local-Key</c>.
+    ///
+    /// Unset disables that surface rather than opening it. Loopback alone is not
+    /// authentication: every process on the machine can reach it, so without a
+    /// key anything running on the till could drain presented cards. Supplied
+    /// through user secrets or the environment, never committed.
+    /// </summary>
+    public string LocalApiKey { get; set; } = string.Empty;
 }

@@ -161,3 +161,44 @@ src/GiftCardPos.Web/
   Pages/       amount entry, held sale, receipt
 tests/GiftCardPos.Tests/
 ```
+
+## Integrating an existing till
+
+A shop that already runs a till does not need this application's screen. It can
+send the sale to a small JSON API on this machine and print the answer on its own
+receipt.
+
+```
+POST http://127.0.0.1:5190/local/v1/sale/payment
+X-Pos-Local-Key: <the key configured as Pos:LocalApiKey>
+
+{ "amount": 12.50, "saleReference": "SALE-1234", "credential": "1234 5678 9012" }
+```
+
+```json
+{ "outcome": "approved", "approvedAmount": 8.00, "outstandingAmount": 4.50,
+  "currency": "USD", "paymentReference": "019f..." }
+```
+
+`outstandingAmount` above zero means the card did not cover the sale and the
+till collects the rest by another tender. That is the ordinary case for a gift
+card, not an error.
+
+**Three rules for whoever integrates this.**
+
+`outcome` has three values, not two. `indeterminate` means the platform may have
+taken the payment and did not say so before the call ended. A till that treats it
+as `declined` will charge the customer twice. Read `paymentReference` and check
+before retaking payment.
+
+`saleReference` is the idempotency key. Repeating a request whose response was
+lost returns the payment already taken rather than taking another, so retry with
+the same reference rather than a new one.
+
+The key is required. An unset `Pos:LocalApiKey` disables this surface rather than
+opening it: loopback is not authentication, because every process on the machine
+can reach it. The API also refuses any request that did not arrive over loopback.
+
+This variant expects the till to supply the credential, which suits a till with
+its own scanner. The variant where the cashier scans on this application's screen
+while the till waits is not built yet.

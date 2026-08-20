@@ -1,3 +1,4 @@
+using GiftCardPos.Web.LocalApi;
 using GiftCardPos.Web.Security;
 using GiftCardPos.Web.Backend;
 using Microsoft.AspNetCore.DataProtection;
@@ -67,6 +68,7 @@ app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseStaticFiles();
 app.UseRouting();
 app.MapRazorPages();
+app.MapLocalSaleApi();
 
 // Liveness: this process is up. Deliberately touches nothing external, so a
 // backend outage does not cause an orchestrator to kill a healthy till.

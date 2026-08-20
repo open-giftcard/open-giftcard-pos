@@ -89,6 +89,8 @@ public sealed class SecurityAndHealthTests : IClassFixture<PosAppFactory>
 /// </summary>
 public sealed class PosAppFactory : WebApplicationFactory<Program>
 {
+    public const string LocalKey = "local-integration-test-key";
+
     protected override IHost CreateHost(IHostBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -107,6 +109,7 @@ public sealed class PosAppFactory : WebApplicationFactory<Program>
                     ["Pos:ClientCode"] = "TILL-TEST",
                     ["Pos:ClientSecret"] = "not-a-real-secret",
                     ["Pos:TerminalCode"] = "T-TEST",
+                    ["Pos:LocalApiKey"] = LocalKey,
                 }));
 
         return base.CreateHost(builder);
