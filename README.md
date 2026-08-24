@@ -13,23 +13,23 @@ to end, and so the backend's POS contract has a real client exercising it.
 
 ### Maturity relative to the other repositories
 
-This repository is deliberately behind the backend, portal, and cardholder, and
-is published as a reference client rather than a released component:
+This repository is published as a reference client rather than retail software.
+Its structural boundaries now match the other browser applications:
 
-- It does not pin the backend OpenAPI contract. The other two clients commit a
-  snapshot under `contracts/` and fail their build on drift; this one
-  hand-transcribes the four POS routes it calls, so a backend rename surfaces at
-  runtime instead of at build time.
-- It has no security-headers middleware, so no CSP, `nosniff`, or
-  `Referrer-Policy`, unlike both browser clients.
-- Data Protection keys are persisted only in Development. Outside it, antiforgery
-  tokens do not survive a restart or span replicas.
-- It exposes `/health` but no `/health/ready`.
-- Coverage is 47 tests over credential formatting, amount entry, response
-  security headers, both health probes, and the pinned backend contract.
-  There are no integration or browser tests.
+- The backend OpenAPI snapshot is pinned under `contracts/` and its declared
+  hash is checked in CI.
+- Every response carries a restrictive Content Security Policy and the standard
+  browser security headers.
+- `/health` reports process liveness and `/health/ready` checks the backend.
+- Development persists Data Protection keys under the ignored `.local`
+  directory. Other environments must name durable shared key storage or startup
+  fails.
+- Automated tests cover the local integration API, credential and amount
+  handling, response security, health probes, contract compatibility, and key
+  durability. A live-backend and browser certification is still outstanding.
 
-Treat these as the entry criteria for calling it released.
+Treat the remaining certification and device-management work as entry criteria
+for calling it released.
 
 Everything financial happens on the platform. This application decides nothing
 about money; it presents a credential, shows what the platform decided, and
@@ -107,6 +107,11 @@ dotnet user-secrets set --project src/GiftCardPos.Web "Pos:ClientSecret" "<secre
 
 The application refuses to start without it. A till that cannot authenticate is
 broken, and discovering that mid-sale is the worst possible moment.
+
+Outside Development, also set `DataProtection:KeysPath` to a durable protected
+directory shared by every instance serving the same lane. This keeps antiforgery
+tokens valid across restarts and instance handoffs. Development uses
+`.local/dataprotection-keys`, which is ignored by Git.
 
 ### 3. Run
 

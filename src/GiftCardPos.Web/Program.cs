@@ -1,7 +1,7 @@
 using GiftCardPos.Web.LocalApi;
 using GiftCardPos.Web.Security;
 using GiftCardPos.Web.Backend;
-using Microsoft.AspNetCore.DataProtection;
+using GiftCardPos.Web.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,16 +16,15 @@ if (builder.Environment.IsDevelopment())
     // A logger failure must never prevent antiforgery key creation or abort a sale.
     builder.Logging.ClearProviders();
     builder.Logging.AddConsole();
-
-    var keyDirectory = Path.Combine(
-        Path.GetTempPath(),
-        "giftcard-pos",
-        "dataprotection-keys");
-    Directory.CreateDirectory(keyDirectory);
-    builder.Services.AddDataProtection()
-        .PersistKeysToFileSystem(new DirectoryInfo(keyDirectory))
-        .SetApplicationName("GiftCardPos");
 }
+
+// Development gets a repository-local key ring. Every other environment must
+// name durable storage shared by all instances, or startup fails before a till
+// can present a form that another instance cannot validate.
+DataProtectionConfiguration.Configure(
+    builder.Services,
+    builder.Configuration,
+    builder.Environment);
 
 builder.Services.AddOptions<PosOptions>()
     .BindConfiguration(PosOptions.SectionName)

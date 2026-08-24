@@ -18,6 +18,10 @@ usable and are not listed.
 
 ### Changed
 
+- The till now persists its Data Protection key ring in Development and
+  requires an explicit durable shared `DataProtection:KeysPath` in every other
+  environment. Antiforgery tokens remain valid across restarts and instance
+  handoffs.
 - The default currency is USD, overridable through `Pos:Currency`, and the
   demonstration basket is plainly named goods rather than a locale-specific one.
 - `MockCartTests` derives its expected string from the line it formats and

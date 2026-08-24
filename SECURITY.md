@@ -37,22 +37,20 @@ numeric code is single use, valid for 60 seconds, and resolved server-side.
 
 ## Known gaps
 
-This repository does not meet the standard the other three do, and its README
-says so. In security terms specifically:
+This remains a reference client rather than a released counter product:
 
-- **No security-headers middleware.** Unlike both browser clients, the till
-  sends no Content Security Policy, `nosniff`, `Referrer-Policy`, or
-  `Permissions-Policy`.
-- **Data Protection keys are configured only in Development.** Outside it,
-  antiforgery tokens do not survive a restart or span replicas.
-- **No pinned API contract.** The four backend routes it calls are hand
-  transcribed, so a backend rename surfaces at runtime, at a counter, rather
-  than at build time.
-- **No `/health/ready`,** only a liveness endpoint.
-- **Coverage is nineteen unit tests.** There are no integration or browser
-  tests.
+- **No live-backend or browser certification.** The automated suite exercises
+  the server, local till API, security headers, health probes, pinned contract,
+  and restart-safe antiforgery keys, but not a real counter device and browser
+  against a deployed platform.
+- **No hardware-backed device secret custody.** Configuration and .NET user
+  secrets are appropriate for development. A deployed till needs an operating
+  system or hardware-backed store with an installation and rotation procedure.
+- **No managed device lifecycle.** Installer signing, terminal enrollment,
+  controlled updates, kiosk policy, and device retirement remain deployment
+  responsibilities.
 
-Treat these as the entry criteria for calling this component released, not as
+Treat these as entry criteria for calling this component released, not as
 accepted risk in something that ships.
 
 ## Scope
