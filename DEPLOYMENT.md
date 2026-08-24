@@ -44,8 +44,8 @@ The deployment owner must provide:
 - a device-bound or operating-system-protected store for both secrets;
 - enrollment that returns the POS client secret once and places it directly in
   that store;
-- rotation and revocation without writing a secret to logs, shell history, or
-  an installer response file;
+- replacement-client rotation without writing a secret to logs, shell history,
+  or an installer response file;
 - terminal retirement and loss response;
 - signed application updates with a rollback policy;
 - kiosk and browser policy appropriate to the counter;
@@ -53,6 +53,17 @@ The deployment owner must provide:
 
 User secrets and plain environment values are local development mechanisms.
 They are not production custody evidence.
+
+The platform supplies the server-side lifecycle primitives. For rotation,
+register a replacement client and its lane terminals, put the returned secret
+directly into the device-bound store, verify authentication and a reversed
+payment, move the lane, then call
+`POST /api/v1/pos/clients/{oldClientId}/disable`. For one lost or retired lane,
+call
+`POST /api/v1/pos/clients/{clientId}/terminals/{terminalId}/disable`.
+Disablement is permanent and idempotently audited. The backend re-resolves both
+device records on every POS request, so already-issued tokens stop immediately
+while sibling terminals remain active.
 
 ## Health and recovery
 

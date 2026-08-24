@@ -20,8 +20,9 @@ Last reviewed: 2026-08-24.
 | Allowed host policy | Implemented fail-closed outside Development | Production must name exact local hosts; wildcard entries are refused. |
 | Trusted ingress policy | Not applicable to the supported lane topology | Bind the UI and local API to loopback; POS calls the backend as an outbound client. |
 | Lane state across replicas or restarts | Explicitly unsupported | Pending cashier handoff state is process-local; deploy one process per lane. |
-| Device secret custody and rotation | Deployment responsibility | User secrets are development storage, not a production device vault. |
-| Installer, signing, enrollment, updates, kiosk policy, retirement | Deployment responsibility | No device-management artifacts exist in this repository. |
+| Device secret rotation and revocation | Backend behavior implemented and tested | Replacement-client rotation plus permanent client/terminal retirement; device-store handling remains the operator's responsibility. |
+| Device secret custody | Deployment responsibility | User secrets are development storage, not a production device vault. |
+| Installer, signing, enrollment, updates, and kiosk policy | Deployment responsibility | No device-management artifacts exist in this repository. |
 | Metrics, alerts, logs, incident response | Deployment responsibility | Health and structured framework logs are source evidence only. |
 | Human browser, scanner, receipt, and counter acceptance | Blocked | Required before calling the component released. |
 | Coordinated public release | In progress | The four repositories share a verified compatibility contract. Canonical tags and the final exact-commit evidence manifest do not exist yet. |

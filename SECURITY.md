@@ -46,9 +46,10 @@ This remains a reference client rather than a released counter product:
 - **No hardware-backed device secret custody.** Configuration and .NET user
   secrets are appropriate for development. A deployed till needs an operating
   system or hardware-backed store with an installation and rotation procedure.
-- **No managed device lifecycle.** Installer signing, terminal enrollment,
-  controlled updates, kiosk policy, and device retirement remain deployment
-  responsibilities.
+- **No managed device installer.** The backend now provides immediate,
+  idempotently audited client and terminal retirement plus replacement-client
+  rotation. Device enrollment, secret-store integration, installer signing,
+  controlled updates, and kiosk policy remain deployment responsibilities.
 
 Treat these as entry criteria for calling this component released, not as
 accepted risk in something that ships.

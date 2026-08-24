@@ -4742,6 +4742,69 @@
         }
       }
     },
+    "/api/v1/pos/clients/{posClientId}/disable": {
+      "post": {
+        "tags": [
+          "POS"
+        ],
+        "summary": "Permanently retires a point-of-sale integration.",
+        "description": "New device-token exchanges and already-issued device tokens are refused on their next API request.",
+        "operationId": "DisablePosClient",
+        "parameters": [
+          {
+            "name": "posClientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosClientResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/pos/clients/{posClientId}/terminals": {
       "post": {
         "tags": [
@@ -4876,6 +4939,78 @@
           },
           "403": {
             "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pos/clients/{posClientId}/terminals/{posTerminalId}/disable": {
+      "post": {
+        "tags": [
+          "POS"
+        ],
+        "summary": "Permanently retires one till.",
+        "description": "Sibling tills remain active. New device-token exchanges are refused immediately, and an already-issued device token is refused on its next API request.",
+        "operationId": "DisablePosTerminal",
+        "parameters": [
+          {
+            "name": "posClientId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "posTerminalId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PosTerminalResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -9451,6 +9586,11 @@
           "registeredAtUtc": {
             "type": "string",
             "format": "date-time"
+          },
+          "disabledAtUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -9481,6 +9621,11 @@
           "registeredAtUtc": {
             "type": "string",
             "format": "date-time"
+          },
+          "disabledAtUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
           }
         },
         "additionalProperties": false

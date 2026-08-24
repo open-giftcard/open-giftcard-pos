@@ -90,6 +90,19 @@ POST /api/v1/pos/clients/{id}/terminals  { "code": "T-01", "storeReference": "ST
 The client secret is returned **once** by the first call. Only its hash is
 stored, so if it is lost the client must be registered again.
 
+The platform provides permanent, audited retirement operations:
+
+```text
+POST /api/v1/pos/clients/{clientId}/disable
+POST /api/v1/pos/clients/{clientId}/terminals/{terminalId}/disable
+```
+
+Both new and already-issued device tokens are refused on their next platform
+request after retirement. Rotate a secret by registering a replacement client
+and its terminals, placing the new one-time secret in the device store, testing
+the replacement lane, and then disabling the old client. There is deliberately
+no recoverable or retry-ambiguous in-place secret rotation.
+
 ### 2. Configure the till
 
 Codes are not secret and live in `appsettings.Development.json`:

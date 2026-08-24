@@ -4,10 +4,10 @@
 
 - Repository: https://github.com/open-giftcard/open-giftcard
 - Branch: `milestone/deployment-certified-rc`
-- Commit: `56c73c689e41aea6073a73db2e575f8f479bc6c2`
+- Commit: `90c7dd2a17a6eb4ea686fc344de25f3a1a155d12`
 - Endpoint: `/swagger/v1/swagger.json`
 - SHA-256:
-  `A5137EFD65B6CB9927419C26CA8BE0A1873C34FE47F4CC22B3C66BCA3549B6C1`
+  `EC8051EBC7F65007DB8BBA6BDF1B84FAA3CDBA16456A96506E1BE562C3C3827C`
 
 That public commit was rebuilt and its served OpenAPI document was verified to
 have exactly the SHA-256 recorded above, with the repository tree confirmed
