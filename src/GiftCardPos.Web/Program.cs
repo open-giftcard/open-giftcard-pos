@@ -4,6 +4,7 @@ using GiftCardPos.Web.Backend;
 using GiftCardPos.Web.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
+var isDevelopment = builder.Environment.IsDevelopment();
 
 builder.Services.AddRazorPages();
 builder.Services.AddSingleton(TimeProvider.System);
@@ -26,12 +27,21 @@ DataProtectionConfiguration.Configure(
     builder.Configuration,
     builder.Environment);
 
+if (!DeploymentSafety.IsAllowedHostsPolicySafe(
+        builder.Configuration["AllowedHosts"],
+        isDevelopment))
+{
+    throw new InvalidOperationException(
+        "AllowedHosts must name the exact POS hosts outside Development; wildcards are refused.");
+}
+
 builder.Services.AddOptions<PosOptions>()
     .BindConfiguration(PosOptions.SectionName)
     .Validate(
-        options => Uri.TryCreate(options.BackendBaseUrl, UriKind.Absolute, out var uri)
-            && uri.Scheme is "http" or "https",
-        "Pos:BackendBaseUrl must be an absolute HTTP or HTTPS URL.")
+        options => DeploymentSafety.IsBackendTransportAllowed(
+            options.BackendBaseUrl,
+            isDevelopment),
+        "Pos:BackendBaseUrl must use HTTPS outside Development; Development may use HTTP.")
     .Validate(
         options => !string.IsNullOrWhiteSpace(options.ClientCode)
             && !string.IsNullOrWhiteSpace(options.TerminalCode),

@@ -18,6 +18,8 @@ usable and are not listed.
 
 ### Changed
 
+- The till now refuses a plain HTTP backend and wildcard `AllowedHosts`
+  outside Development.
 - The till now persists its Data Protection key ring in Development and
   requires an explicit durable shared `DataProtection:KeysPath` in every other
   environment. Antiforgery tokens remain valid across restarts and instance

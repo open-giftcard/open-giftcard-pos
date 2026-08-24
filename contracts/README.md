@@ -3,8 +3,8 @@
 `backend.openapi.json` was captured from the authoritative public backend:
 
 - Repository: https://github.com/open-giftcard/open-giftcard
-- Branch: `main`
-- Commit: `fbf3f7bd27479db66b7e3ae022576fc9db46278a`
+- Branch: `feat/durable-data-protection`
+- Commit: `f80bab86c63106c9ba4669bedc1850c0dec2a6cb`
 - Endpoint: `/swagger/v1/swagger.json`
 - SHA-256:
   `20BB4B338EE6FCA3A72146F8AA71D0F0644FEAE5816C610B08CAB9971C424B43`

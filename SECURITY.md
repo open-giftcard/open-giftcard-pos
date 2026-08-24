@@ -39,10 +39,10 @@ numeric code is single use, valid for 60 seconds, and resolved server-side.
 
 This remains a reference client rather than a released counter product:
 
-- **No live-backend or browser certification.** The automated suite exercises
-  the server, local till API, security headers, health probes, pinned contract,
-  and restart-safe antiforgery keys, but not a real counter device and browser
-  against a deployed platform.
+- **No physical-device or human browser certification.** The backend's local
+  smoke gate now exercises live device authentication, payment, reporting, and
+  refund. Scanner hardware, browser policy, receipt handoff, and counter use
+  against a named staging deployment remain unverified.
 - **No hardware-backed device secret custody.** Configuration and .NET user
   secrets are appropriate for development. A deployed till needs an operating
   system or hardware-backed store with an installation and rotation procedure.

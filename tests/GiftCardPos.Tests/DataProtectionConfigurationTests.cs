@@ -137,7 +137,8 @@ public sealed class DataProtectionConfigurationTests
                 configuration.AddInMemoryCollection(new Dictionary<string, string?>
                 {
                     ["DataProtection:KeysPath"] = keysPath,
-                    ["Pos:BackendBaseUrl"] = "http://192.0.2.1:5143",
+                    ["AllowedHosts"] = "localhost",
+                    ["Pos:BackendBaseUrl"] = "https://api.example",
                     ["Pos:ClientCode"] = "TILL-RESTART-TEST",
                     ["Pos:ClientSecret"] = "not-a-real-secret",
                     ["Pos:TerminalCode"] = "T-RESTART-TEST",

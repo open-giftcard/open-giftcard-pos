@@ -26,10 +26,16 @@ Its structural boundaries now match the other browser applications:
   fails.
 - Automated tests cover the local integration API, credential and amount
   handling, response security, health probes, contract compatibility, and key
-  durability. A live-backend and browser certification is still outstanding.
+  durability. The backend repository now carries an automated live transaction
+  smoke gate; human browser and physical counter-device certification remain.
 
 Treat the remaining certification and device-management work as entry criteria
 for calling it released.
+
+The current release boundary and counter deployment checklist are recorded in
+[`PRODUCTION_READINESS.md`](PRODUCTION_READINESS.md) and
+[`DEPLOYMENT.md`](DEPLOYMENT.md). Public tagging rules are in
+[`PUBLISHING.md`](PUBLISHING.md).
 
 Everything financial happens on the platform. This application decides nothing
 about money; it presents a credential, shows what the platform decided, and
