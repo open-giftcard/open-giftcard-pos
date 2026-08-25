@@ -14,9 +14,12 @@ namespace GiftCardPos.Tests;
 /// this client falling behind the backend. The backend made an idempotency key
 /// required on 2026-08-20 while this client sent none, and assertions of this
 /// shape would have passed throughout: the field is present in the contract,
-/// which is all they check. That gap closes only with a generated client or a
-/// test that serialises the real request and compares it to the schema, and it
-/// is recorded as open work rather than papered over here.
+/// which is all they check. <see cref="SerialisedRequestContractTests"/> now
+/// closes that direction for the calls it covers: it drives the real client
+/// through a capturing handler and reads the body actually sent, so nothing is
+/// transcribed. What remains open is on the backend side, where no schema in
+/// the served document declares a <c>required</c> array, so required-ness
+/// cannot be checked from here at all.
 ///
 /// `scripts/verify-contract-pin.sh` separately asserts the document is the one
 /// `contracts/README.md` claims, because a recaptured file with a stale hash
