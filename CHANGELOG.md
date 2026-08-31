@@ -23,7 +23,7 @@ usable and are not listed.
   returned once, and stored only as a hash, so a container cannot be handed a
   working secret without weakening the property that makes the credential worth
   having. Register a till by hand when you want one.
-- **`RELEASE_COMPATIBILITY.json` no longer names tags that do not exist.** It
+- `RELEASE_COMPATIBILITY.json` no longer names tags that do not exist. It
   declared release `v0.5.0-rc.1` and gave all four components that tag, and no
   repository has ever had a public tag. Schema version 2 adds a `development`
   channel for that state, and on a released channel now requires the tag it
