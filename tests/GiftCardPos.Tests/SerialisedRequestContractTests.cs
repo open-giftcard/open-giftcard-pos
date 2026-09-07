@@ -29,12 +29,14 @@ namespace GiftCardPos.Tests;
 ///
 /// <para>
 /// The required-field check is deliberately written to be driven by the
-/// contract rather than by a list kept here. It is currently vacuous: the
-/// served document declares no <c>required</c> on any of its 113 object
-/// schemas, so there is nothing for it to enforce. That is a backend gap, not a
-/// gap in this test, and it is recorded in the backend's CURRENT_TASK under
-/// Track A. When the backend starts declaring required fields, this test starts
-/// enforcing them here with no change.
+/// contract rather than by a list kept here. It was vacuous when written,
+/// because the served document declared no <c>required</c> on any object
+/// schema. That is no longer true: the pinned contract now declares required
+/// fields on 15 schemas, and <c>CreatePaymentProvisionRequest</c> requires
+/// <c>idempotencyKey</c>, which is the exact field whose absence caused the
+/// live defect described above. The check enforces rather than decorates, and
+/// it did so without any change here, which was the point of driving it from
+/// the document.
 /// </para>
 /// </summary>
 public sealed class SerialisedRequestContractTests
